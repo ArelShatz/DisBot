@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "discord.js": "^14.3.0",
+    "dotenv": "^16.0.1",
+    "node": "^16.17.0",
+    "node-fetch": "^3.2.10",
+    "rss-parser": "^3.12.0"
+  }
+}
