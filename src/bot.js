@@ -1,5 +1,6 @@
 require("dotenv").config();
 const Discord = require("discord.js");
+const {addSpeechEvent} = require("discord-speech-recognition");
 const Parser = require('rss-parser');
 const parser = new Parser();
 
@@ -30,9 +31,8 @@ const categories = {
     relations: ["http://www.ynet.co.il/Integration/StoryRss3925.xml", 0]
 }
 const re = new RegExp('<meta name="twitter:description" content="*"/>');
-
 let feed;
-
+addSpeechEvent(client);
 
 function reply_succ(interaction, title, description, fields){
     interaction.reply({
@@ -162,6 +162,16 @@ client.on("ready", async (client) => {
             type: 3
         }]
     });
+
+    cmd.create({
+        name: "jarvis",
+        description: "summon Jarvis into your voice channel and talk to him",
+        options: [{
+            name: "action",
+            description: "choose an action, type /help jarvis to get all possible actions",
+            type: 3
+        }]
+    });
 });
 
 
@@ -202,5 +212,12 @@ client.on("interactionCreate", async (interaction) => {
         });
     }
 });
+
+
+client.on("speech", (msg) => {
+    if (!msg.content) return;
+  
+    msg.author.send(msg.content);
+  });
 
 client.login(process.env.BOT_TOKEN);
