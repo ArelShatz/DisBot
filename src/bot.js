@@ -1,10 +1,11 @@
 require("dotenv").config();
 const Discord = require("discord.js");
+const {joinVoiceChannel} = require("@discordjs/voice");
 const {addSpeechEvent} = require("discord-speech-recognition");
 const Parser = require('rss-parser');
 const parser = new Parser();
 
-const client = new Discord.Client({intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.GuildMessages]});
+const client = new Discord.Client({intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.GuildMessages, Discord.GatewayIntentBits.GuildVoiceStates]});
 const colors = [0x05ED11, 0x0EE39F, 0x0099FF, 0x0707F0, 0x9806C4, 0xE30BC3, 0xED210E, 0xED9C05, 0xF5F116, 0xFFFFFF];
 const ERR_COLOR = 0xED210E;
 const SUCC_COLOR = 0x0099FF;
@@ -32,6 +33,7 @@ const categories = {
 }
 const re = new RegExp('<meta name="twitter:description" content="*"/>');
 let feed;
+let voiceConnection;
 addSpeechEvent(client);
 
 function reply_succ(interaction, title, description, fields){
@@ -61,7 +63,7 @@ function reply_err(interaction, title, description){
 //bot functions
 function Help(interaction, command){
     if (!command){
-        reply_succ(interaction, "command names:", null, [{name: "/help", value: "lists all commands with all possible options"}, {name: "/ping", value: "check if the bot is alive"}, {name: "/ynet", value: "fetch the current ynet feed"}]);
+        reply_succ(interaction, "command names:", null, [{name: "/help", value: "lists all commands with all possible options"}, {name: "/ping", value: "check if the bot is alive"}, {name: "/ynet", value: "fetch the current ynet feed"}, {name: "/jarvis", value: "summon Jarvis into your voice channel and talk to him"}]);
     }
 
     else if (command === "help"){
@@ -76,8 +78,13 @@ function Help(interaction, command){
         reply_succ(interaction, "ynet command:", "fetch the current ynet feed", [{name: "category", value: "choose a ynet category to display, available categories are:\nnews1\nnews2\nopinions\nconsumption\nsports\nculture\ninvolvment\nhealth\ntech1\ntech2\ntech_reviews\ngames\ncars\ntourism\nadults\nfood\njudism\nfinance\nscience\nrelations"}]);
     }
 
+    else if (command === "jarvis"){
+        reply_succ(interaction, "jarvis command:", "summon Jarvis into your voice channel and talk to him", [{name: "action", value: "choose an action, available actions are:\nstart - make jarvis join the asker's voice chat\nstop - make jarvis leave the voice chat"}]);
+    }
+
     else{
         reply_err(interaction, "invalid command", `${command} is not a valid command, type /help to see all commands`);
+        return 400;
     }
 }
 
@@ -122,11 +129,49 @@ async function display_ynet(interaction, category){
     });
 }
 
+async function Jarvis(interaction, action){
+    if (!action){
+        action = "start";
+    }
+
+    if (action === "start"){
+        const channelId = interaction.member.voice.channelId;;
+
+        if (!channelId){
+            reply_err(interaction, "invalid requirement", "you are not in a voice chat, enter one and then call jarvis");
+            return 400;
+        }
+        voiceConnection = joinVoiceChannel({
+            channelId: channelId,
+            guildId: interaction.guildId,
+            adapterCreator: interaction.guild.voiceAdapterCreator,
+            selfDeaf: false
+        });
+
+        interaction.reply({
+            content: "Jarvis online"
+        });
+    }
+
+    else if (action === "stop"){
+        if (!voiceConnection){
+            reply_err(interaction, "invalid action", "jarvis is not connected to a voice channel");
+            return 400;
+        }
+        voiceConnection.destroy();
+    }
+
+    else{
+        reply_err(interaction, "invalid action", `${action} is not a valid action, type /help jarvis to get all possible actions`);
+        return 400;
+    }
+}
+
 //event listener for built-in events
 client.on("ready", async (client) => {
     client.user.setActivity("Building Intelligence");
-    const serverID = process.env.SERVER_ID;
-    const server = client.guilds.cache.get(serverID);
+    ///const serverID = process.env.SERVER_ID;
+    //const server = client.guilds.cache.get(serverID);
 
     let cmd;
     cmd = client.application.commands;
@@ -158,7 +203,7 @@ client.on("ready", async (client) => {
         description: "fetch the current ynet feed",
         options: [{
             name: "catregory",
-            description: "choose a ynet category to display",
+            description: "choose a ynet category to display, type /help ynet to get all possible categories",
             type: 3
         }]
     });
@@ -205,9 +250,14 @@ client.on("interactionCreate", async (interaction) => {
         status = display_ynet(interaction, category);
     }
 
+    else if (commandName === "jarvis"){
+        const action = options.getString("action");
+        status = Jarvis(interaction, action);
+    }
+
     if (status >= 500){
         interaction.reply({
-            content: 'bot fault status ${status}',
+            content: `bot fault status ${status}`,
             ephemeral: true
         });
     }
@@ -216,8 +266,8 @@ client.on("interactionCreate", async (interaction) => {
 
 client.on("speech", (msg) => {
     if (!msg.content) return;
-  
-    msg.author.send(msg.content);
-  });
+
+    console.log(msg.content);
+});
 
 client.login(process.env.BOT_TOKEN);
