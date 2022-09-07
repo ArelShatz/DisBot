@@ -1,7 +1,7 @@
 const {reply_succ, reply_err} = require("../helper.js");
-const {ping_command} = require("./commands/ping.js");
-const {ynet_command} = require("./commands/ynet.js");
-const {jarvis_command} = require("./commands/jarvis.js");
+const {ping_command} = require("./ping.js");
+const {ynet_command} = require("./ynet.js");
+const {jarvis_command} = require("./jarvis.js");
 
 help_command = {
     name: "help",

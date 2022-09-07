@@ -1,14 +1,16 @@
 const { CommandInteractionOptionResolver } = require('discord.js');
 
 const axios = require("axios");
-const re = new RegExp('<meta\sproperty(.*?)/>');
+const re = /<meta\sname="description"(.*?)\/>/g;
 
 async function f(){
 	axios.get("https://www.ynet.co.il/digital/gaming/article/sjw5mhb1i").then((res)=>{	
 		html = res.data;
 		const ans = html.match(re);
-		console.log(ans);
+		let description = ans[0];
+		description = description.slice(34, -3);
+		console.log(description);
    	});
 }
 
-f()
+f();

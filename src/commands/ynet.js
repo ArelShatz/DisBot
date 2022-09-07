@@ -1,8 +1,12 @@
 const {EmbedBuilder} = require("discord.js");
 const {reply_succ, reply_err} = require("../helper.js");
 const Parser = require('rss-parser');
+const axios = require("axios");
+const { arch } = require("os");
 const parser = new Parser();
 
+const descRegex = /<meta\sname="description"(.*?)\/>/g;
+const htmlEncodingFilter = /&(lt|gt|quot);/g;
 const colors = [0x05ED11, 0x0EE39F, 0x0099FF, 0x0707F0, 0x9806C4, 0xE30BC3, 0xED210E, 0xED9C05, 0xF5F116, 0xFFFFFF];
 
 const categories = {
@@ -26,6 +30,25 @@ const categories = {
     finance: ["http://www.ynet.co.il/Integration/StoryRss6.xml", 0],
     science: ["http://www.ynet.co.il/Integration/StoryRss2142.xml", 0],
     relations: ["http://www.ynet.co.il/Integration/StoryRss3925.xml", 0]
+}
+
+async function getArticleDesc(url){
+	const res = await axios.get(url);
+	html = res.data;
+	const ans = html.match(descRegex);
+	let description = ans[0];
+    description = description.replace(htmlEncodingFilter, function (m, p) { 
+        switch (p) {
+            case 'lt':
+              return '<';
+            case 'gt':
+              return '>';
+            case 'quot':
+              return '\'';
+        }
+    });
+
+	return description.slice(34, -3);
 }
 
 module.exports = {
@@ -52,19 +75,31 @@ module.exports = {
         let feed = await parser.parseURL(rss);
         let current_ind = categories[category][1]
     
-        let embeds = [];
+        let temp_ind = current_ind;
+        let descPromises = [];
         for (let _=0; _ < 3; _++){
+            article = feed.items[temp_ind % 30];
+            const promise = getArticleDesc(article.link);
+            descPromises.push(promise);
+            temp_ind++;
+        }
+
+        const descriptions = await Promise.all(descPromises);
+
+        let embeds = [];
+        for (desc of descriptions){
             article = feed.items[current_ind % 30];
             const ynet_embed_pattern = new EmbedBuilder()
                         .setColor(colors[current_ind % colors.length])
                         .setAuthor({name: 'ynet', iconURL: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Ynet_website_logo.svg/1200px-Ynet_website_logo.svg.png', url: 'https://www.ynet.co.il'})
                         .setThumbnail('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Ynet_website_logo.svg/1200px-Ynet_website_logo.svg.png')
                         .setTitle(article.title)
+                        .setDescription(desc)
                         .setTimestamp()
                         .setURL(article.link);
     
             embeds.push(ynet_embed_pattern);
-            current_ind = current_ind + 1;
+            current_ind++;
             categories[category][1] = current_ind;
         }
     

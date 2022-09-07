@@ -1,4 +1,5 @@
 const {reply_succ, reply_err} = require("../helper.js");
+const {joinVoiceChannel} = require("@discordjs/voice");
 
 module.exports = {
     jarvis_command: {
@@ -28,6 +29,7 @@ module.exports = {
                 adapterCreator: interaction.guild.voiceAdapterCreator,
                 selfDeaf: false
             });
+            return voiceConnection;
     
             //interaction.reply({
             //    content: "Jarvis online"
