@@ -1,3 +1,4 @@
+//defines the jarvis command
 const {reply_succ, reply_err} = require("../helper.js");
 const {joinVoiceChannel} = require("@discordjs/voice");
 
@@ -17,8 +18,9 @@ module.exports = {
         }
     
         if (action === "start"){
-            const channelId = interaction.member.voice.channelId;;
+            const channelId = interaction.member.voice.channelId;   //get the sender's voice channel id
     
+            //checks if the sender is not inside a voice channel
             if (!channelId){
                 reply_err(interaction, "invalid requirement", "you are not in a voice chat, enter one and then call jarvis");
                 return 400;
@@ -37,6 +39,7 @@ module.exports = {
         }
     
         else if (action === "stop"){
+            //checks if the bot is not in a call
             if (!voiceConnection){
                 reply_err(interaction, "invalid action", "jarvis is not connected to a voice channel");
                 return 400;

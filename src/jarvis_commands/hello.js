@@ -1,3 +1,4 @@
+//defines the hello speech-command for jarvis
 greetings = [
     "Hi ",
     "Hello ",
@@ -7,7 +8,7 @@ greetings = [
 
 module.exports = {
     Hello: () => {
-        const rand_ind = Math.floor(Math.random() * greetings.length);
+        const rand_ind = Math.floor(Math.random() * greetings.length);  //choose a random reply from the greeting list
         return greetings[rand_ind]; // + name
     }
 }

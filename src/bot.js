@@ -1,3 +1,4 @@
+//the main bot file - sets up the client, defines all global constants and defines all events
 require("dotenv").config();
 const Discord = require("discord.js");
 const DiscordTTS = require("discord-tts");
@@ -14,18 +15,18 @@ addSpeechEvent(client);
 emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
-//commands
+//command imports
 const {help_command, Help} = require("./commands/help.js");
 const {ping_command, Ping} = require("./commands/ping.js");
 const {ynet_command, DisplayYnet} = require("./commands/ynet.js");
 const {jarvis_command, Jarvis} = require("./commands/jarvis.js");
 
-//jarvis commands
+//jarvis speech-command imports
 const {Time, Date} = require("./jarvis_commands/datetime.js");
 const {Hello} = require("./jarvis_commands/hello.js");
 
 
-//event listener for built-in events
+//event listener for when the client is ready
 client.on("ready", async (client) => {
     client.user.setActivity("Building Intelligence");
     ///const serverID = process.env.SERVER_ID;
@@ -47,13 +48,6 @@ client.on("ready", async (client) => {
 });
 
 
-client.on("message", async (msg) => {
-    if (msg.author.bot){
-        return;
-    }
-});
-
-
 //event listener for custom commmands
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
@@ -61,23 +55,25 @@ client.on("interactionCreate", async (interaction) => {
     const {commandName, options} = interaction;
     let status = 418;
 
-    if (commandName === "help"){
-        const command = options.getString("command");
-        status = Help(interaction, command);
-    }
+    switch(commandName){
+        case "help":
+            const command = options.getString("command");
+            status = Help(interaction, command);
+            break;
 
-    else if (commandName === "ping"){
-        status = Ping(interaction);
-    }
+        case "ping":
+            status = Ping(interaction);
+            break;
 
-    else if (commandName === "ynet"){
-        const category = options.getString("catregory");
-        status = DisplayYnet(interaction, category);
-    }
-
-    else if (commandName === "jarvis"){
-        const action = options.getString("action");
-        voiceConnection = await Jarvis(interaction, action);
+        case "ynet":
+            const category = options.getString("catregory");
+            status = DisplayYnet(interaction, category);
+            break;
+            
+        case "jarvis":
+            const action = options.getString("action");
+            voiceConnection = await Jarvis(interaction, action);
+            break;
     }
 
     if (status >= 500){
@@ -89,6 +85,7 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 
+//speech event listener
 client.on("speech", async (msg) => {
     //if (msg.content != "hello") return;
     if (!msg.content) return;

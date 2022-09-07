@@ -1,3 +1,4 @@
+//defines the ping command
 const {reply_succ} = require("../helper.js");
 
 module.exports = {

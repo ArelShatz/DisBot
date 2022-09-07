@@ -1,8 +1,8 @@
+//defines the ynet command
 const {EmbedBuilder} = require("discord.js");
-const {reply_succ, reply_err} = require("../helper.js");
+const {reply_err} = require("../helper.js");
 const Parser = require('rss-parser');
 const axios = require("axios");
-const { arch } = require("os");
 const parser = new Parser();
 
 const descRegex = /<meta\sname="description"(.*?)\/>/g;
@@ -67,14 +67,16 @@ module.exports = {
         }
     
         let rss = categories[category][0];
+        //checks if the rss that is related to the category we chose exists
         if (!rss){
             reply_err(interaction, "invalid category", `${category} is not a valid category, type /help ynet to get all possible categories`);
             return 400;
         }
     
         let feed = await parser.parseURL(rss);
-        let current_ind = categories[category][1]
-    
+        let current_ind = categories[category][1];
+
+        //stores all promises that return descrptions
         let temp_ind = current_ind;
         let descPromises = [];
         for (let _=0; _ < 3; _++){
@@ -84,8 +86,10 @@ module.exports = {
             temp_ind++;
         }
 
+        //resolve all promises at once (faster than resolving 1 by 1)
         const descriptions = await Promise.all(descPromises);
 
+        //prepare all embeds and reply all of them
         let embeds = [];
         for (desc of descriptions){
             article = feed.items[current_ind % 30];
